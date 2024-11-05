@@ -19,7 +19,6 @@ export default function Workouts() {
                 }
 
                 const apiUrl = process.env.REACT_APP_API_URL;
-                console.log('Fetching workouts from:', `${apiUrl}/workouts/getMyWorkouts`);
 
                 const response = await fetch(`${apiUrl}/workouts/getMyWorkouts`, {
                     headers: {
@@ -29,9 +28,6 @@ export default function Workouts() {
                     }
                 });
 
-                // Log response details
-                console.log('Response status:', response.status);
-                console.log('Response headers:', [...response.headers.entries()]);
 
                 if (!response.ok) {
                     const errorText = await response.text();
@@ -40,7 +36,6 @@ export default function Workouts() {
                 }
 
                 const data = await response.json();
-                console.log('Workouts data:', data);
 
                 if (Array.isArray(data.workouts)) {
                     setWorkouts(data.workouts);

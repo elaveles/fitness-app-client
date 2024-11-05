@@ -20,7 +20,6 @@ export default function Register() {
 
         try {
             const apiUrl = process.env.REACT_APP_API_URL;
-            console.log('Registering at:', `${apiUrl}/users/register`);
 
             const response = await fetch(`${apiUrl}/users/register`, {
                 method: 'POST',
@@ -31,24 +30,18 @@ export default function Register() {
                 body: JSON.stringify({ email, password })
             });
 
-            // Log response details
-            console.log('Response status:', response.status);
-            console.log('Response headers:', [...response.headers.entries()]);
-
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                throw new Error(`Registration failed: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Registration failed');
             }
 
             const data = await response.json();
-            console.log('Registration response:', data);
 
             if (data.message === "Registered Successfully") {
                 setEmail('');
                 setPassword('');
                 setConfirmPassword('');
-                notyf.success('Registration successful');
+                notyf.success(data.message);
             } else {
                 throw new Error(data.message || 'Registration failed');
             }

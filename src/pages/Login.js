@@ -14,20 +14,12 @@ export default function Login() {
 
     const notyf = new Notyf();
 
-    // Debugging
-    useEffect(() => {
-        console.log('API URL:', process.env.REACT_APP_API_URL);
-    }, []);
-
     const authenticate = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
         const apiUrl = process.env.REACT_APP_API_URL;
-        
-        // Debug log
-        console.log('Attempting login request to:', `${apiUrl}/users/login`);
 
         try {
             const response = await fetch(`${apiUrl}/users/login`, {
@@ -39,18 +31,12 @@ export default function Login() {
                 body: JSON.stringify({ email, password })
             });
 
-            // Log response details
-            console.log('Response status:', response.status);
-            
-            // If response isn't OK, get the error text
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                throw new Error(`Server error: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Login failed');
             }
 
             const data = await response.json();
-            console.log('Login response:', data);
 
             if (data.access) {
                 localStorage.setItem('token', data.access);
@@ -84,7 +70,6 @@ export default function Login() {
             }
 
             const data = await response.json();
-            console.log('User details response:', data);
 
             if (data.user) {
                 setUser({ id: data.user._id, isAdmin: data.user.isAdmin });
