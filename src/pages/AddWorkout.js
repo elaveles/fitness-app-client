@@ -17,7 +17,6 @@ export default function AddWorkout() {
     e.preventDefault();
 
     let token = localStorage.getItem('token');
-    console.log('Token:', token);
 
     fetch(`${process.env.REACT_APP_API_URL}/workouts/addWorkout`, {
       method: 'POST',
