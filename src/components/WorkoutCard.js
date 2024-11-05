@@ -2,19 +2,19 @@ import { Card, Modal, Button, Form } from 'react-bootstrap';
 import { Notyf } from 'notyf';
 import { useState } from 'react';
 
-export default function WorkoutCard({ workouts }) {
+export default function WorkoutCard({ workouts, onWorkoutUpdate }) {
     const { _id, name, duration, status } = workouts;
     const notyf = new Notyf();
     
     const [show, setShow] = useState(false);
     const [updatedName, setUpdatedName] = useState(name);
-    const [updatedDuration, setUpdatedDuration] = useState("");
+    const [updatedDuration, setUpdatedDuration] = useState(duration);
     const [updatedStatus, setUpdatedStatus] = useState(status);
 
     const handleClose = () => setShow(false);
     const handleShow = () => {
         setUpdatedName(name);
-        setUpdatedDuration("");
+        setUpdatedDuration(duration);
         setUpdatedStatus(status);
         setShow(true);
     };
@@ -34,13 +34,17 @@ export default function WorkoutCard({ workouts }) {
         })
         .then(res => res.json())
         .then(data => {
-            console.log(data);
-
             if (data.error) {
                 notyf.error("Unsuccessful Workout Update: " + data.error);
             } else {
                 notyf.success("Workout Updated Successfully!");
-                window.location.reload();
+
+                onWorkoutUpdate({
+                    _id,
+                    name: updatedName,
+                    duration: updatedDuration,
+                    status: updatedStatus
+                });
             }
         })
         .catch(err => {
@@ -65,7 +69,6 @@ export default function WorkoutCard({ workouts }) {
                 notyf.error("Unsuccessful Workout Deletion: " + data.error);
             } else {
                 notyf.success("Workout Deleted Successfully!");
-                window.location.reload();
             }
         });
     }
@@ -113,11 +116,15 @@ export default function WorkoutCard({ workouts }) {
                         <Form.Group controlId="formWorkoutStatus">
                             <Form.Label>Status</Form.Label>
                             <Form.Control
-                                type="text"
+                                as="select"
                                 value={updatedStatus}
                                 onChange={(e) => setUpdatedStatus(e.target.value)}
                                 required
-                            />
+                            >
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </Form.Control>
                         </Form.Group>
                     </Form>
                 </Modal.Body>

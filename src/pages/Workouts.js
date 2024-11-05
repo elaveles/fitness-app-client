@@ -1,4 +1,3 @@
-// Workouts.js
 import { useEffect, useState, useContext } from 'react';
 import WorkoutCard from '../components/WorkoutCard';
 import UserContext from '../context/UserContext';
@@ -9,6 +8,14 @@ export default function Workouts() {
     const { user } = useContext(UserContext);
     const [workouts, setWorkouts] = useState([]);
     const [error, setError] = useState(null);
+
+    const handleWorkoutUpdate = (updatedWorkout) => {
+        setWorkouts((prevWorkouts) =>
+            prevWorkouts.map(workout =>
+                workout._id === updatedWorkout._id ? { ...workout, ...updatedWorkout } : workout
+            )
+        );
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -27,7 +34,6 @@ export default function Workouts() {
                         'Content-Type': 'application/json'
                     }
                 });
-
 
                 if (!response.ok) {
                     const errorText = await response.text();
@@ -65,7 +71,10 @@ export default function Workouts() {
                         <Row>
                             {workouts.map(workout => (
                                 <Col md={3} key={workout._id}>
-                                    <WorkoutCard workouts={workout} />
+                                    <WorkoutCard
+                                        workouts={workout}
+                                        onWorkoutUpdate={handleWorkoutUpdate}
+                                    />
                                 </Col>
                             ))}
                         </Row>
