@@ -2,7 +2,7 @@ import { Card, Modal, Button, Form } from 'react-bootstrap';
 import { Notyf } from 'notyf';
 import { useState } from 'react';
 
-export default function WorkoutCard({ workouts, onWorkoutUpdate }) {
+export default function WorkoutCard({ workouts, onWorkoutUpdate, onWorkoutDelete }) {
     const { _id, name, duration, status } = workouts;
     const notyf = new Notyf();
     
@@ -69,7 +69,13 @@ export default function WorkoutCard({ workouts, onWorkoutUpdate }) {
                 notyf.error("Unsuccessful Workout Deletion: " + data.error);
             } else {
                 notyf.success("Workout Deleted Successfully!");
+
+                onWorkoutDelete(_id);
             }
+        })
+        .catch(err => {
+            console.error("Delete Error:", err);
+            notyf.error("Error deleting workout.");
         });
     }
 

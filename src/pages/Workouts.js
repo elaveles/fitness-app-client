@@ -9,14 +9,6 @@ export default function Workouts() {
     const [workouts, setWorkouts] = useState([]);
     const [error, setError] = useState(null);
 
-    const handleWorkoutUpdate = (updatedWorkout) => {
-        setWorkouts((prevWorkouts) =>
-            prevWorkouts.map(workout =>
-                workout._id === updatedWorkout._id ? { ...workout, ...updatedWorkout } : workout
-            )
-        );
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -60,10 +52,26 @@ export default function Workouts() {
         }
     }, [user]);
 
+    const handleWorkoutUpdate = (updatedWorkout) => {
+        setWorkouts(prevWorkouts =>
+            prevWorkouts.map(workout =>
+                workout._id === updatedWorkout._id
+                    ? { ...workout, ...updatedWorkout }
+                    : workout
+            )
+        );
+    };
+
+    const handleWorkoutDelete = (deletedId) => {
+        setWorkouts((prevWorkouts) =>
+            prevWorkouts.filter(workout => workout._id !== deletedId)
+        );
+    };
+
     return (
         <Container className="mt-5 text-center">
             {error && <div className="alert alert-danger">{error}</div>}
-            
+
             {user && user.id ? (
                 workouts.length > 0 ? (
                     <>
@@ -74,6 +82,7 @@ export default function Workouts() {
                                     <WorkoutCard
                                         workouts={workout}
                                         onWorkoutUpdate={handleWorkoutUpdate}
+                                        onWorkoutDelete={handleWorkoutDelete}
                                     />
                                 </Col>
                             ))}
