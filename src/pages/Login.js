@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom'; 
-import {Notyf} from 'notyf';
+import { Notyf } from 'notyf';
 import UserContext from '../context/UserContext';
 
 export default function Login() {
@@ -9,49 +9,93 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isActive, setIsActive] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const notyf = new Notyf();
 
+    // Debugging
+    useEffect(() => {
+        console.log('API URL:', process.env.REACT_APP_API_URL);
+    }, []);
 
-    const authenticate = (e) => {
+    const authenticate = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError('');
 
-        fetch(`${process.env.REACT_APP_API_URL}/users/login`, {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password })
-        })
-        .then(res => res.json())
-        .then(data => {
+        const apiUrl = process.env.REACT_APP_API_URL;
+        
+        // Debug log
+        console.log('Attempting login request to:', `${apiUrl}/users/login`);
+
+        try {
+            const response = await fetch(`${apiUrl}/users/login`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            // Log response details
+            console.log('Response status:', response.status);
+            
+            // If response isn't OK, get the error text
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Login response:', data);
+
             if (data.access) {
                 localStorage.setItem('token', data.access);
-                retrieveUserDetails(data.access);
+                await retrieveUserDetails(data.access);
                 notyf.success('Thank you for logging in.');
-            } else if (data.message === "Incorrect email or password") {
-                notyf.error("Incorrect email or password");
-            } else if (data.message === "No email found") {
-                notyf.error("Email does not exist");
             } else {
-                notyf.error("Something went wrong");
+                throw new Error(data.message || 'Login failed');
             }
-        });
-
-        setEmail('');
-        setPassword('');
+        } catch (error) {
+            console.error('Login error:', error);
+            setError(error.message);
+            notyf.error(error.message || "An error occurred during login");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const retrieveUserDetails = (token) => {
-        fetch(`${process.env.REACT_APP_API_URL}/users/details`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
+    const retrieveUserDetails = async (token) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/users/details`, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    "Accept": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('User details error:', errorText);
+                throw new Error(`Failed to get user details: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('User details response:', data);
+
             if (data.user) {
                 setUser({ id: data.user._id, isAdmin: data.user.isAdmin });
+            } else {
+                throw new Error('User details not found');
             }
-        });
+        } catch (error) {
+            console.error('Error retrieving user details:', error);
+            notyf.error("Failed to retrieve user details");
+            localStorage.removeItem('token');
+        }
     };
 
     useEffect(() => {
@@ -62,18 +106,35 @@ export default function Login() {
         user.id !== null ? (
             <Navigate to="/workouts" />
         ) : (
-            <Form onSubmit={authenticate}>
+            <Form onSubmit={authenticate} className="p-4">
                 <h1 className="my-5 text-center">Login</h1>
-                <Form.Group controlId="userEmail">
+                {error && <div className="alert alert-danger">{error}</div>}
+                <Form.Group className="mb-3" controlId="userEmail">
                     <Form.Label>Email address</Form.Label>
-                    <Form.Control type="text" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Form.Control 
+                        type="email" 
+                        placeholder="Enter email" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        required 
+                    />
                 </Form.Group>
-                <Form.Group controlId="password">
+                <Form.Group className="mb-3" controlId="password">
                     <Form.Label>Password</Form.Label>
-                    <Form.Control type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Form.Control 
+                        type="password" 
+                        placeholder="Password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        required 
+                    />
                 </Form.Group>
-                <Button variant="primary" type="submit" disabled={!isActive}>
-                    Submit
+                <Button 
+                    variant="primary" 
+                    type="submit" 
+                    disabled={!isActive || isLoading}
+                >
+                    {isLoading ? 'Logging in...' : 'Submit'}
                 </Button>
             </Form>
         )

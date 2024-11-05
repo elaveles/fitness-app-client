@@ -1,120 +1,119 @@
 import { useState, useEffect, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
-import {Notyf} from 'notyf';
+import { Notyf } from 'notyf';
 import UserContext from '../context/UserContext';
 
 export default function Register() {
-
     const { user } = useContext(UserContext);
-    const notyf = new Notyf();
-
-
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-
     const [isActive, setIsActive] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    function registerUser(e) {
+    const notyf = new Notyf();
 
+    const registerUser = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
 
-        fetch(`${process.env.REACT_APP_API_URL}/users/register`, {
+        try {
+            const apiUrl = process.env.REACT_APP_API_URL;
+            console.log('Registering at:', `${apiUrl}/users/register`);
 
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+            const response = await fetch(`${apiUrl}/users/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
 
-                email: email,
-                password: password
+            // Log response details
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
 
-            })
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Registration failed: ${response.status}`);
+            }
 
-        })
-            .then(res => res.json())
-            .then(data => {
+            const data = await response.json();
+            console.log('Registration response:', data);
 
-                if (data.message === "Registered Successfully") {
-
-                    setEmail('');
-                    setPassword('');
-                    setConfirmPassword('');
-
-                    notyf.success('Registration successful');
-
-
-                } else {
-
-                    notyf.error('Something went wrong');
-
-
-                }
-
-            })
-    }
-
-
+            if (data.message === "Registered Successfully") {
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                notyf.success('Registration successful');
+            } else {
+                throw new Error(data.message || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            notyf.error(error.message || 'Something went wrong');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-
-        if ((email !== "" && password !== "" && confirmPassword !== "") && (password === confirmPassword)) {
-
-            setIsActive(true)
-
-        } else {
-
-            setIsActive(false)
-
-        }
-
-    }, [email, password, confirmPassword])
+        setIsActive(
+            email !== "" && 
+            password !== "" && 
+            confirmPassword !== "" && 
+            password === confirmPassword
+        );
+    }, [email, password, confirmPassword]);
 
     return (
-
-        (user.id !== null) ?
+        user.id !== null ? (
             <Navigate to="/workouts" />
-            :
-
-            <Form onSubmit={(e) => registerUser(e)}>
+        ) : (
+            <Form onSubmit={registerUser} className="p-4">
                 <h1 className="my-5 text-center">Register</h1>
 
-                <Form.Group>
+                <Form.Group className="mb-3">
                     <Form.Label>Email:</Form.Label>
                     <Form.Control
                         type="email"
                         placeholder="Enter Email"
                         required
                         value={email}
-                        onChange={e => { setEmail(e.target.value) }} />
+                        onChange={e => setEmail(e.target.value)}
+                    />
                 </Form.Group>
-                <Form.Group>
+                <Form.Group className="mb-3">
                     <Form.Label>Password:</Form.Label>
                     <Form.Control
                         type="password"
                         placeholder="Enter Password"
                         required
                         value={password}
-                        onChange={e => { setPassword(e.target.value) }} />
+                        onChange={e => setPassword(e.target.value)}
+                    />
                 </Form.Group>
-                <Form.Group>
+                <Form.Group className="mb-3">
                     <Form.Label>Confirm Password:</Form.Label>
                     <Form.Control
                         type="password"
                         placeholder="Confirm Password"
                         required
                         value={confirmPassword}
-                        onChange={e => { setConfirmPassword(e.target.value) }} />
+                        onChange={e => setConfirmPassword(e.target.value)}
+                    />
                 </Form.Group>
-                {
-                    isActive
-
-                        ? <Button variant="primary" type="submit">Submit</Button>
-                        : <Button variant="primary" disabled>Submit</Button>
-                }
+                <Button 
+                    variant="primary" 
+                    type="submit" 
+                    disabled={!isActive || isLoading}
+                >
+                    {isLoading ? 'Registering...' : 'Submit'}
+                </Button>
             </Form>
-
-    )
+        )
+    );
 }

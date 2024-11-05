@@ -1,3 +1,4 @@
+// Workouts.js
 import { useEffect, useState, useContext } from 'react';
 import WorkoutCard from '../components/WorkoutCard';
 import UserContext from '../context/UserContext';
@@ -7,31 +8,61 @@ import { Link } from 'react-router-dom';
 export default function Workouts() {
     const { user } = useContext(UserContext);
     const [workouts, setWorkouts] = useState([]);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/workouts/getMyWorkouts`, {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No auth token found');
+                }
+
+                const apiUrl = process.env.REACT_APP_API_URL;
+                console.log('Fetching workouts from:', `${apiUrl}/workouts/getMyWorkouts`);
+
+                const response = await fetch(`${apiUrl}/workouts/getMyWorkouts`, {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
                 });
+
+                // Log response details
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
                 const data = await response.json();
+                console.log('Workouts data:', data);
+
                 if (Array.isArray(data.workouts)) {
                     setWorkouts(data.workouts);
                 } else {
+                    console.warn('No workouts array in response:', data);
                     setWorkouts([]);
                 }
             } catch (error) {
                 console.error('Error fetching workouts:', error);
+                setError(error.message);
             }
         };
 
-        fetchData();
-    }, []);
+        if (user?.id) {
+            fetchData();
+        }
+    }, [user]);
 
     return (
         <Container className="mt-5 text-center">
+            {error && <div className="alert alert-danger">{error}</div>}
+            
             {user && user.id ? (
                 workouts.length > 0 ? (
                     <>
