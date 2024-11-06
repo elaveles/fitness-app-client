@@ -3,7 +3,7 @@ import { Notyf } from 'notyf';
 import { useState } from 'react';
 
 export default function WorkoutCard({ workouts, onWorkoutUpdate, onWorkoutDelete }) {
-    const { _id, name, duration, status } = workouts;
+    const { _id, name, duration, status, dateAdded } = workouts; // Assuming dateAdded is passed in the workouts object
     const notyf = new Notyf();
     
     const [show, setShow] = useState(false);
@@ -79,6 +79,8 @@ export default function WorkoutCard({ workouts, onWorkoutUpdate, onWorkoutDelete
         });
     }
 
+    const formattedDateAdded = new Date(dateAdded).toLocaleDateString();
+
     return (
         <>
             <Card className="mt-3">
@@ -88,6 +90,8 @@ export default function WorkoutCard({ workouts, onWorkoutUpdate, onWorkoutDelete
                     <Card.Text>{duration}</Card.Text>
                     <Card.Subtitle>Status:</Card.Subtitle>
                     <Card.Text>{status}</Card.Text>
+                    <Card.Subtitle>Date Added:</Card.Subtitle>
+                    <Card.Text>{formattedDateAdded}</Card.Text>
                 </Card.Body>
                 <Card.Footer className="d-flex justify-content-around">
                     <Button variant="primary" size="sm" onClick={handleShow}>Edit</Button>

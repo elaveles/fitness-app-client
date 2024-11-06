@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';  // Import Navigate for redirection
 import { Notyf } from 'notyf';
 import UserContext from '../context/UserContext';
 
@@ -11,6 +11,7 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isActive, setIsActive] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [redirectToLogin, setRedirectToLogin] = useState(false);
 
     const notyf = new Notyf();
 
@@ -42,6 +43,8 @@ export default function Register() {
                 setPassword('');
                 setConfirmPassword('');
                 notyf.success(data.message);
+
+                setRedirectToLogin(true);
             } else {
                 throw new Error(data.message || 'Registration failed');
             }
@@ -61,6 +64,10 @@ export default function Register() {
             password === confirmPassword
         );
     }, [email, password, confirmPassword]);
+
+    if (redirectToLogin) {
+        return <Navigate to="/login" />;
+    }
 
     return (
         user.id !== null ? (
